@@ -9,6 +9,7 @@ targets = [
     "i686-unknown-linux-gnu",
     "x86_64-apple-darwin",
     "x86_64-unknown-linux-gnu",
+    "x86_64-unknown-linux-musl",
 ]
 std_targets = [
     "aarch64-apple-darwin",
@@ -59,17 +60,18 @@ std_targets = [
     "x86_64-unknown-fuchsia",
     "x86_64-unknown-illumos",
     "x86_64-unknown-linux-gnux32",
-    "x86_64-unknown-linux-musl",
     "x86_64-unknown-netbsd",
     "x86_64-unknown-redox",
 ]
-results = { target: { "latest": {} } for target in targets + std_targets }
+results = {target: {"latest": {}} for target in targets + std_targets}
 profiles = ["minimal", "default", "complete"]
 
 dist_root = "https://static.rust-lang.org/dist"
-one_day = datetime.timedelta(days = 1)
+one_day = datetime.timedelta(days=1)
 
-def f(d = None):
+
+def f(d=None):
+    print(d)
     date_path = f"/{d}" if d else ""
 
     try:
@@ -88,12 +90,14 @@ def f(d = None):
         skipped = False
 
         for target in std_targets:
-            if not d: results[target]["latest"] = {
-                "date": date_str,
-                "components": {},
-            }
+            if not d:
+                results[target]["latest"] = {
+                    "date": date_str,
+                    "components": {},
+                }
 
-            if "rust-std" in results[target]["latest"]["components"]: continue
+            if "rust-std" in results[target]["latest"]["components"]:
+                continue
 
             src = pkgs["rust-std"]["target"].get(target)
             if src and src["available"]:
@@ -104,13 +108,15 @@ def f(d = None):
                 }
 
         for target in targets:
-            if not d: results[target]["latest"] = {
-                "date": date_str,
-                "components": {},
-            }
+            if not d:
+                results[target]["latest"] = {
+                    "date": date_str,
+                    "components": {},
+                }
 
             for component in components["complete"]:
-                if component in results[target]["latest"]["components"]: continue
+                if component in results[target]["latest"]["components"]:
+                    continue
 
                 pkg = pkgs[component]["target"]
                 src = pkg.get("*") or pkg.get(target)
@@ -122,15 +128,17 @@ def f(d = None):
                     }
 
             for profile in profiles:
-                if profile in results[target]: continue
+                if profile in results[target]:
+                    continue
 
-                result = { "date": date_str, "components": {} }
+                result = {"date": date_str, "components": {}}
                 success = True
 
                 for component in components[profile]:
                     pkg = pkgs[component]["target"]
                     src = pkg.get("*") or pkg.get(target)
-                    if not src: continue
+                    if not src:
+                        continue
 
                     if src["available"]:
                         result["components"][component] = {
@@ -147,6 +155,7 @@ def f(d = None):
 
         if skipped:
             f(date - one_day)
+
 
 f()
 json.dump(results, open("lib/toolchains.json", "w"))
